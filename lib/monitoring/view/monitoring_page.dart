@@ -31,73 +31,70 @@ class _MonitoringPageState extends State<MonitoringPage> {
         context, MaterialPageRoute(builder: (context) => const SettingsPage()));
   }
 
+  List<Widget> getTabOptions(BuildContext context) {
+    final monitoringState = context.read<MonitoringCubit>().state;
+    final currentMonitoringData =
+        monitoringState.monitoringData![monitoringState.selectedDate.stringKey];
+    return <Widget>[
+      MonitoringDetails(
+          metric: Metrics.solar, graphData: currentMonitoringData!.solar),
+      MonitoringDetails(
+          metric: Metrics.house, graphData: currentMonitoringData.house),
+      MonitoringDetails(
+          metric: Metrics.battery, graphData: currentMonitoringData.battery),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    List<Widget> getTabOptions() {
-      final monitoringState = context.read<MonitoringCubit>().state;
-      final currentMonitoringData = monitoringState
-          .monitoringData![monitoringState.selectedDate.stringKey];
-      return <Widget>[
-        MonitoringDetails(
-            metric: Metrics.solar, graphData: currentMonitoringData!.solar),
-        MonitoringDetails(
-            metric: Metrics.house, graphData: currentMonitoringData.house),
-        MonitoringDetails(
-            metric: Metrics.battery, graphData: currentMonitoringData.battery),
-      ];
-    }
-
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Monitoring'),
-            actions: [
-              IconButton(
-                  onPressed: _openSettings, icon: const Icon(Icons.settings))
-            ],
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.wb_sunny_rounded),
-                  label: 'Solar',
-                  backgroundColor: Colors.green),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home_rounded), label: 'Heatpump'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.battery_charging_full_rounded),
-                  label: 'Wallbox')
-            ],
-            currentIndex: _selectedTabIndex,
-            onTap: _onTabSelected,
-          ),
-          body: BlocBuilder<MonitoringCubit, MonitoringState>(
-              builder: (context, state) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<MonitoringCubit>().fetchMonitoringData(
-                    date: state.selectedDate, shouldRefresh: true);
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const MonitoringDateSelector(),
-                    const SizedBox(height: 10),
-                    if (state.status == MonitoringStatus.loading)
-                      const MonitoringLoading()
-                    else if (state.status == MonitoringStatus.success)
-                      getTabOptions().elementAt(_selectedTabIndex)
-                    else
-                      const MonitoringErrorView()
-                  ],
-                ),
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Monitoring'),
+          actions: [
+            IconButton(
+                onPressed: _openSettings, icon: const Icon(Icons.settings))
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+                icon: Icon(Icons.wb_sunny_rounded),
+                label: 'Solar',
+                backgroundColor: Colors.green),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home_rounded), label: 'Heatpump'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.battery_charging_full_rounded),
+                label: 'Wallbox')
+          ],
+          currentIndex: _selectedTabIndex,
+          onTap: _onTabSelected,
+        ),
+        body: BlocBuilder<MonitoringCubit, MonitoringState>(
+            builder: (context, state) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<MonitoringCubit>().fetchMonitoringData(
+                  date: state.selectedDate, shouldRefresh: true);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const MonitoringDateSelector(),
+                  const SizedBox(height: 10),
+                  if (state.status == MonitoringStatus.loading)
+                    const MonitoringLoading()
+                  else if (state.status == MonitoringStatus.success)
+                    getTabOptions(context)[_selectedTabIndex]
+                  else
+                    const MonitoringErrorView()
+                ],
               ),
-            );
-          })),
-    );
+            ),
+          );
+        }));
   }
 }
